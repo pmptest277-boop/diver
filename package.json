@@ -1,0 +1,10 @@
+{
+  "name": "diver",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:e2e": "node --test tests/e2e-sim.test.mjs",
+    "build": "rm -rf dist && mkdir dist && cp -r index.html styles.css src dist/"
+  }
+}
