@@ -2,6 +2,10 @@ import { CONFIG, ENTITY_TABLE } from './config.js';
 
 function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
 
+function isPredator(kind) {
+  return kind === 'shark' || kind === 'octopus';
+}
+
 function weightedPick(rng = Math.random) {
   const entries = Object.entries(ENTITY_TABLE);
   const total = entries.reduce((s, [, e]) => s + e.weight, 0);
@@ -56,13 +60,16 @@ export class DiverGame {
     const kind = weightedPick(this.rng);
     const rightToLeft = this.rng() > 0.5;
     const y = this.waterline + 24 + this.rng() * (CONFIG.height - this.waterline - 90);
-    const speed = 60 + this.rng() * 80;
+    const baseSpeed = 60 + this.rng() * 80;
+    const speed = isPredator(kind) ? baseSpeed * CONFIG.predatorSpeedMultiplier : baseSpeed;
     this.entities.push({
       kind,
       x: rightToLeft ? CONFIG.width + 30 : -30,
       y,
       r: CONFIG.entityRadius,
+      speed,
       vx: rightToLeft ? -speed : speed,
+      vy: 0,
       color: ENTITY_TABLE[kind].color,
     });
   }
@@ -76,7 +83,7 @@ export class DiverGame {
     }
 
     const speed = CONFIG.baseSpeed * this.debuff.multiplier;
-    this.player.x = clamp(this.player.x + input.dx * speed * dt, this.player.r, CONFIG.width - this.player.r);
+    this.player.x = clamp(this.player.x, this.player.r, CONFIG.width - this.player.r);
     this.player.y = clamp(this.player.y + input.dy * speed * dt, this.player.r, CONFIG.height - this.player.r);
 
     if (this.inWater) {
@@ -96,7 +103,19 @@ export class DiverGame {
       this.spawnEntity();
     }
 
-    for (const e of this.entities) e.x += e.vx * dt;
+    for (const e of this.entities) {
+      if (isPredator(e.kind)) {
+        const wobble = (this.rng() - 0.5) * CONFIG.predatorTrackingWobble;
+        const targetY = this.player.y + wobble;
+        const deltaY = targetY - e.y;
+        const desiredVy = Math.sign(deltaY) * Math.min(Math.abs(deltaY) * 2, e.speed * 0.65);
+        e.vy += (desiredVy - e.vy) * CONFIG.predatorTrackingStrength * dt;
+        e.vy = clamp(e.vy, -e.speed * 0.75, e.speed * 0.75);
+      }
+
+      e.x += e.vx * dt;
+      e.y = clamp(e.y + (e.vy ?? 0) * dt, this.waterline + 12, CONFIG.height - 60);
+    }
     this.entities = this.entities.filter((e) => e.x > -50 && e.x < CONFIG.width + 50);
 
     for (let i = this.entities.length - 1; i >= 0; i--) {

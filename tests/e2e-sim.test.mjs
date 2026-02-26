@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DiverGame } from '../src/game.js';
+import { CONFIG } from '../src/config.js';
 
 function makeGame() {
   const canvas = { getContext: () => ({
@@ -40,4 +41,35 @@ test('海中氧氣歸零 game over', () => {
   game.oxygen = 0.01;
   game.update({ dx: 0, dy: 0 }, 1);
   assert.equal(game.state, 'gameover');
+});
+
+test('主角僅能上下移動，左右輸入不生效', () => {
+  const game = makeGame();
+  const originalX = game.player.x;
+  const originalY = game.player.y;
+
+  game.update({ dx: 1, dy: -1 }, 1);
+
+  assert.equal(game.player.x, originalX);
+  assert.equal(game.player.y, originalY - CONFIG.baseSpeed);
+});
+
+test('鯊魚與章魚速度加倍並帶有模糊追蹤', () => {
+  const game = makeGame();
+  game.player.y = 420;
+
+  game.rng = () => 0.99;
+  game.spawnEntity();
+  let predator = game.entities.at(-1);
+  while (predator && predator.kind !== 'shark' && predator.kind !== 'octopus') {
+    game.spawnEntity();
+    predator = game.entities.at(-1);
+  }
+
+  assert.ok(predator, 'expected a predator to be spawned');
+  assert.ok(predator.speed >= 120 && predator.speed <= 280);
+
+  const initialY = predator.y;
+  game.update({ dx: 0, dy: 0 }, 0.5);
+  assert.notEqual(predator.y, initialY);
 });
