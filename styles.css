@@ -1,0 +1,41 @@
+:root {
+  color-scheme: dark;
+  font-family: "Noto Sans TC", Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #071428;
+  color: #f2f6fc;
+}
+
+.game-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+canvas {
+  border: 2px solid #ffffff66;
+  max-width: min(100%, 960px);
+  height: auto;
+  background: linear-gradient(to bottom, #8dd5ff 0 33%, #1976d2 33%, #0f4a8f 66%, #06284f 100%);
+}
+
+.hud {
+  width: min(960px, 100%);
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+#warning {
+  font-weight: 700;
+  color: #ff6464;
+  min-width: 10rem;
+}
+
+.hint { opacity: 0.8; }
